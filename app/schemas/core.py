@@ -25,6 +25,9 @@ class ZonaBase(BaseModel):
     nombre: str
     ciudad: str
     activo: bool = True
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    radio: Optional[int] = 1000
 
 class ZonaCreate(ZonaBase): pass
 
@@ -32,6 +35,9 @@ class ZonaUpdate(BaseModel):
     nombre: Optional[str] = None
     ciudad: Optional[str] = None
     activo: Optional[bool] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    radio: Optional[int] = None
 
 class ZonaResponse(ZonaBase):
     id: int

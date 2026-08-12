@@ -10,6 +10,11 @@ class ZonaGeografica(Base):
     nombre = Column(String, unique=True, index=True, nullable=False)
     ciudad = Column(String, nullable=False)
     activo = Column(Boolean, default=True)
+    
+    # Nuevos campos para geocercas y mapas interactivos
+    latitud = Column(Float, nullable=True)
+    longitud = Column(Float, nullable=True)
+    radio = Column(Integer, default=1000)
 
     propiedades = relationship("PropiedadAirbnb", back_populates="zona")
     aliados = relationship("AliadoComercial", back_populates="zona")
