@@ -43,26 +43,42 @@ class ZonaResponse(ZonaBase):
     id: int
     class Config: from_attributes = True
 
+from pydantic import BaseModel
+from typing import Optional, List
+
 # ==========================================
-# PROPIEDADES (Aptos individuales)
+# PROPIEDADES (Aptos individuales y Edificios)
 # ==========================================
 class PropiedadBase(BaseModel):
     nombre: str
     direccion_apto: Optional[str] = None
-    zona_id: int
     activo: bool = True
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
 
-class PropiedadCreate(PropiedadBase): pass
+class PropiedadCreate(PropiedadBase): 
+    zonas_ids: List[int] = []
 
 class PropiedadUpdate(BaseModel):
     nombre: Optional[str] = None
     direccion_apto: Optional[str] = None
     activo: Optional[bool] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    zonas_ids: Optional[List[int]] = None
 
 class PropiedadResponse(PropiedadBase):
     id: int
     qr_access_token: Optional[str] = None
     class Config: from_attributes = True
+
+# NUEVO: DTO para la creación de edificios en lote desde el Frontend
+class PropiedadBatchCreate(BaseModel):
+    nombre_edificio: str
+    latitud: float
+    longitud: float
+    apartamentos: List[str]  # Ej: ["101", "102", "201", "202"]
+    zonas_ids: List[int] = []
 
 # ==========================================
 # ALIADOS (Restaurantes)
@@ -82,3 +98,4 @@ class AliadoUpdate(BaseModel):
 class AliadoResponse(AliadoBase):
     id: int
     class Config: from_attributes = True
+    

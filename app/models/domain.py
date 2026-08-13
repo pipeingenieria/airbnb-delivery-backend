@@ -1,7 +1,15 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float, DateTime, Table
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.models.base import Base
+
+# NUEVO: Tabla intermedia para que una propiedad pertenezca a múltiples zonas (Geocercas solapadas)
+propiedad_zona_asoc = Table(
+    "propiedad_zona",
+    Base.metadata,
+    Column("propiedad_id", Integer, ForeignKey("propiedades_airbnb.id", ondelete="CASCADE"), primary_key=True),
+    Column("zona_id", Integer, ForeignKey("zonas_geograficas.id", ondelete="CASCADE"), primary_key=True)
+)
 
 class ZonaGeografica(Base):
     __tablename__ = "zonas_geograficas"
@@ -11,12 +19,11 @@ class ZonaGeografica(Base):
     ciudad = Column(String, nullable=False)
     activo = Column(Boolean, default=True)
     
-    # Nuevos campos para geocercas y mapas interactivos
     latitud = Column(Float, nullable=True)
     longitud = Column(Float, nullable=True)
     radio = Column(Integer, default=1000)
 
-    propiedades = relationship("PropiedadAirbnb", back_populates="zona")
+    propiedades = relationship("PropiedadAirbnb", secondary=propiedad_zona_asoc, back_populates="zonas")
     aliados = relationship("AliadoComercial", back_populates="zona")
 
 class CategoriaServicio(Base):
@@ -47,12 +54,15 @@ class PropiedadAirbnb(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String, nullable=False)
-    direccion_apto = Column(String) # Nuevo: para identificar el apto específico
-    zona_id = Column(Integer, ForeignKey("zonas_geograficas.id"))
+    direccion_apto = Column(String) 
+    
+    latitud = Column(Float, nullable=True)
+    longitud = Column(Float, nullable=True)
+    
     qr_access_token = Column(String, unique=True, index=True)
     activo = Column(Boolean, default=True)
 
-    zona = relationship("ZonaGeografica", back_populates="propiedades")
+    zonas = relationship("ZonaGeografica", secondary=propiedad_zona_asoc, back_populates="propiedades")
     pedidos = relationship("PedidoTransaccion", back_populates="propiedad")
 
 class CatalogoItem(Base):
