@@ -246,3 +246,32 @@ async def delete_aliado(aliado_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(aliado)
     await db.commit()
     return None
+
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from notificar_airbnb import enviar_correo_acceso_airbnb 
+
+@router.post("/propiedades/{propiedad_id}/notificar-airbnb")
+async def notificar_airbnb_endpoint(
+    propiedad_id: int, 
+    background_tasks: BackgroundTasks, 
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(PropiedadAirbnb).where(PropiedadAirbnb.id == propiedad_id))
+    # FIX: Se usa scalar_one_or_none() para consultas asíncronas en SQLAlchemy 2.0
+    propiedad = result.scalar_one_or_none()
+    
+    if not propiedad or not propiedad.airbnb_correo:
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada o sin correo configurado")
+    
+    # Ejecuta el envío de correo en segundo plano
+    background_tasks.add_task(
+        enviar_correo_acceso_airbnb,
+        destinatario=propiedad.airbnb_correo,
+        nombre_anfitrion=propiedad.airbnb_nombre,
+        nombre_apto=propiedad.nombre,
+        qr_token=propiedad.qr_access_token
+    )
+    
+    return {"message": "Notificación puesta en cola para envío."}

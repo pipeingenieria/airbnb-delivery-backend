@@ -65,6 +65,10 @@ class PropiedadAirbnb(Base):
     zonas = relationship("ZonaGeografica", secondary=propiedad_zona_asoc, back_populates="propiedades")
     pedidos = relationship("PedidoTransaccion", back_populates="propiedad")
 
+    airbnb_nombre = Column(String, nullable=True)
+    airbnb_telefono = Column(String, nullable=True)
+    airbnb_correo = Column(String, nullable=True)
+
 class CatalogoItem(Base):
     __tablename__ = "catalogo_items"
 

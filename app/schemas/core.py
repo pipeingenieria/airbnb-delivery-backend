@@ -58,6 +58,9 @@ class PropiedadBase(BaseModel):
 
 class PropiedadCreate(PropiedadBase): 
     zonas_ids: List[int] = []
+    airbnb_nombre: str | None = None
+    airbnb_telefono: str | None = None
+    airbnb_correo: str | None = None
 
 class PropiedadUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -66,10 +69,17 @@ class PropiedadUpdate(BaseModel):
     latitud: Optional[float] = None
     longitud: Optional[float] = None
     zonas_ids: Optional[List[int]] = None
+    airbnb_nombre: str | None = None
+    airbnb_telefono: str | None = None
+    airbnb_correo: str | None = None
 
 class PropiedadResponse(PropiedadBase):
     id: int
     qr_access_token: Optional[str] = None
+    airbnb_nombre: Optional[str] = None
+    airbnb_telefono: Optional[str] = None
+    airbnb_correo: Optional[str] = None
+    
     class Config: from_attributes = True
 
 # NUEVO: DTO para la creación de edificios en lote desde el Frontend
