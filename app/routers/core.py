@@ -161,20 +161,27 @@ async def get_propiedades(db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(PropiedadAirbnb))
     return res.scalars().all()
 
+from sqlalchemy.orm import selectinload # Asegúrate de que esta importación esté (puedes dejarla aquí adentro si quieres, pero mejor arriba)
+
 @router.put("/propiedades/{propiedad_id}", response_model=PropiedadResponse)
 async def update_propiedad(propiedad_id: int, propiedad_actualizada: PropiedadUpdate, db: AsyncSession = Depends(get_db)):
-    propiedad = await db.get(PropiedadAirbnb, propiedad_id)
+    
+    # SOLUCIÓN: Cargar la propiedad trayendo sus zonas pre-cargadas para evitar el MissingGreenlet
+    stmt = select(PropiedadAirbnb).options(selectinload(PropiedadAirbnb.zonas)).where(PropiedadAirbnb.id == propiedad_id)
+    res_prop = await db.execute(stmt)
+    propiedad = res_prop.scalar_one_or_none()
+    
     if not propiedad:
         raise HTTPException(status_code=404, detail="Propiedad no encontrada.")
     
     update_data = propiedad_actualizada.model_dump(exclude_unset=True)
     
-    # Solución asíncrona robusta para la tabla intermedia de zonas
+    # Manejar actualización de zonas_ids de forma independiente
     if "zonas_ids" in update_data:
         zonas_ids = update_data.pop("zonas_ids")
         if zonas_ids:
-            res = await db.execute(select(ZonaGeografica).where(ZonaGeografica.id.in_(zonas_ids)))
-            propiedad.zonas = list(res.scalars().all())
+            res_zonas = await db.execute(select(ZonaGeografica).where(ZonaGeografica.id.in_(zonas_ids)))
+            propiedad.zonas = list(res_zonas.scalars().all())
         else:
             propiedad.zonas = []
 
