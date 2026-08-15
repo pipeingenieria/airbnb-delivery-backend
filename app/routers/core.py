@@ -100,14 +100,17 @@ async def delete_zona(zona_id: int, db: AsyncSession = Depends(get_db)):
 # ----------------------------------------------------
 @router.post("/propiedades", response_model=PropiedadResponse, status_code=status.HTTP_201_CREATED)
 async def create_propiedad(propiedad: PropiedadCreate, db: AsyncSession = Depends(get_db)):
-    # 1. Crear instancia base
+    # 1. Crear instancia base con los datos de contacto incluidos
     nueva = PropiedadAirbnb(
         nombre=propiedad.nombre,
         direccion_apto=propiedad.direccion_apto,
         activo=propiedad.activo,
         latitud=propiedad.latitud,
         longitud=propiedad.longitud,
-        qr_access_token=str(uuid.uuid4())
+        qr_access_token=str(uuid.uuid4()),
+        airbnb_nombre=propiedad.airbnb_nombre,      # <-- NUEVO
+        airbnb_telefono=propiedad.airbnb_telefono,  # <-- NUEVO
+        airbnb_correo=propiedad.airbnb_correo       # <-- NUEVO
     )
     
     # 2. Buscar y enlazar zonas múltiples (Asíncrono)
