@@ -278,3 +278,29 @@ async def notificar_airbnb_endpoint(
     )
     
     return {"message": "Notificación puesta en cola para envío."}
+
+
+import cloudinary
+import cloudinary.uploader
+from fastapi import APIRouter, File, UploadFile, HTTPException, status
+import os
+
+# Configuración automática con las variables de entorno
+cloudinary.config(
+  cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
+  api_key = os.getenv("CLOUDINARY_API_KEY"),
+  api_secret = os.getenv("CLOUDINARY_API_SECRET"),
+  secure = True
+)
+
+@router.post("/upload-imagen")
+async def upload_imagen(file: UploadFile = File(...)):
+    try:
+        # Subimos el archivo directamente a la nube de Cloudinary
+        result = cloudinary.uploader.upload(file.file, folder="airbnb_propiedades")
+        return {"url": result.get("secure_url")}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al subir la imagen a la nube: {str(e)}"
+        )
