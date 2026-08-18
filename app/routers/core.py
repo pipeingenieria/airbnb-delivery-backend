@@ -305,3 +305,21 @@ async def upload_imagen(file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al subir la imagen a la nube: {str(e)}"
         )
+
+from pydantic import BaseModel
+import re
+
+class ImagenDeleteRequest(BaseModel):
+    url: str
+
+@router.post("/upload-imagen/delete")
+async def delete_imagen(request: ImagenDeleteRequest):
+    try:
+        # Extraemos exactamente el ID público de la carpeta "airbnb_propiedades/xxxxxx"
+        match = re.search(r'(airbnb_propiedades/[^.]+)', request.url)
+        if match:
+            public_id = match.group(1)
+            cloudinary.uploader.destroy(public_id) # 💥 Fuego a discreción
+        return {"message": "Imagen eliminada con éxito de Cloudinary"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
