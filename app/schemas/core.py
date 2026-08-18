@@ -61,6 +61,7 @@ class PropiedadCreate(PropiedadBase):
     airbnb_nombre: str | None = None
     airbnb_telefono: str | None = None
     airbnb_correo: str | None = None
+    imagen_url: Optional[str] = None
 
 class PropiedadUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -72,6 +73,7 @@ class PropiedadUpdate(BaseModel):
     airbnb_nombre: str | None = None
     airbnb_telefono: str | None = None
     airbnb_correo: str | None = None
+    imagen_url: Optional[str] = None
 
 class PropiedadResponse(PropiedadBase):
     id: int
@@ -79,6 +81,7 @@ class PropiedadResponse(PropiedadBase):
     airbnb_nombre: Optional[str] = None
     airbnb_telefono: Optional[str] = None
     airbnb_correo: Optional[str] = None
+    imagen_url: Optional[str] = None  # <-- Añadir
     
     class Config: from_attributes = True
 

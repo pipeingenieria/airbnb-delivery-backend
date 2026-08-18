@@ -110,7 +110,8 @@ async def create_propiedad(propiedad: PropiedadCreate, db: AsyncSession = Depend
         qr_access_token=str(uuid.uuid4()),
         airbnb_nombre=propiedad.airbnb_nombre,      # <-- NUEVO
         airbnb_telefono=propiedad.airbnb_telefono,  # <-- NUEVO
-        airbnb_correo=propiedad.airbnb_correo       # <-- NUEVO
+        airbnb_correo=propiedad.airbnb_correo,       # <-- NUEVO
+        imagen_url=propiedad.imagen_url
     )
     
     # 2. Buscar y enlazar zonas múltiples (Asíncrono)

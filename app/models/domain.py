@@ -68,6 +68,7 @@ class PropiedadAirbnb(Base):
     airbnb_nombre = Column(String, nullable=True)
     airbnb_telefono = Column(String, nullable=True)
     airbnb_correo = Column(String, nullable=True)
+    imagen_url = Column(String, nullable=True)
 
 class CatalogoItem(Base):
     __tablename__ = "catalogo_items"
