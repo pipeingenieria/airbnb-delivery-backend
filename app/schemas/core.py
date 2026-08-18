@@ -6,18 +6,24 @@ from typing import Optional
 # ==========================================
 class CategoriaBase(BaseModel):
     nombre: str
+    descripcion: Optional[str] = None
+    icono: Optional[str] = None
+    activo: bool = True
     requiere_despacho: bool = True
 
 class CategoriaCreate(CategoriaBase): pass
 
 class CategoriaUpdate(BaseModel):
     nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    icono: Optional[str] = None
+    activo: Optional[bool] = None
     requiere_despacho: Optional[bool] = None
 
 class CategoriaResponse(CategoriaBase):
     id: int
     class Config: from_attributes = True
-
+    
 # ==========================================
 # ZONAS (Edificios/Nodos)
 # ==========================================
