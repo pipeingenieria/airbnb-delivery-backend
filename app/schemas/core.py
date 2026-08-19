@@ -135,3 +135,31 @@ class AliadoResponse(AliadoBase):
     qr_access_token: Optional[str] = None
     
     class Config: from_attributes = True
+
+
+# ==========================================
+# CATÁLOGO DE PRODUCTOS (Aliados)
+# ==========================================
+class CatalogoItemBase(BaseModel):
+    seccion: str = "Menú Principal" # <-- NUEVO
+    nombre: str
+    descripcion: Optional[str] = None
+    precio_base: float
+    imagen_url: Optional[str] = None
+    disponible: bool = True
+    orden_display: int = 0
+
+class CatalogoItemCreate(CatalogoItemBase): pass
+
+class CatalogoItemUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    precio_base: Optional[float] = None
+    imagen_url: Optional[str] = None
+    disponible: Optional[bool] = None
+    orden_display: Optional[int] = None
+
+class CatalogoItemResponse(CatalogoItemBase):
+    id: int
+    aliado_id: int
+    class Config: from_attributes = True

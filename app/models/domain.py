@@ -88,6 +88,7 @@ class CatalogoItem(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     aliado_id = Column(Integer, ForeignKey("aliados_comerciales.id"))
+    seccion = Column(String, default="Menú Principal") # <-- NUEVO: Para agrupar la carta
     nombre = Column(String, nullable=False)
     descripcion = Column(String)
     precio_base = Column(Float, nullable=False)
