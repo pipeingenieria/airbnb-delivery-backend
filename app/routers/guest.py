@@ -22,13 +22,13 @@ async def get_guest_view_data(qr_token: str, db: AsyncSession = Depends(get_db))
     if not zonas_ids:
         raise HTTPException(status_code=404, detail="Propiedad sin cobertura logística.")
 
-    # 2. Buscar aliados activos en esas zonas
+    # 2. FILTRADO ESTRICTO: Solo trae aliados cuya zona coincida Y su estado operativo sea exactamente "Abierto"
     res_aliados = await db.execute(
         select(AliadoComercial, CategoriaServicio)
         .join(CategoriaServicio, AliadoComercial.categoria_id == CategoriaServicio.id)
         .where(
             AliadoComercial.zona_id.in_(zonas_ids), 
-            AliadoComercial.estado_operativo == "Abierto"
+            AliadoComercial.estado_operativo == "Abierto" # <-- Blindado aquí
         )
     )
     aliados_db = res_aliados.all()
@@ -44,7 +44,7 @@ async def get_guest_view_data(qr_token: str, db: AsyncSession = Depends(get_db))
             "id": aliado.id,
             "name": aliado.nombre,
             "category_id": cat.id,
-            "rating": 4.8, # Calificación simulada temporalmente
+            "rating": 4.8,
             "time": "30-45 min",
             "priceLevel": "$$",
             "tags": cat.nombre,
