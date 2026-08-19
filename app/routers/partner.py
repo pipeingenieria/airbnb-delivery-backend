@@ -4,7 +4,7 @@ from sqlalchemy import select
 from typing import List
 
 from app.database import get_db
-from app.models.domain import AliadoComercial, CatalogoItem
+from app.models.domain import AliadoComercial, CatalogoItem, CategoriaServicio
 from app.schemas.core import CatalogoItemCreate, CatalogoItemUpdate, CatalogoItemResponse
 
 router = APIRouter(prefix="/api/v1/core/partner", tags=["Portal Aliados"])
@@ -23,13 +23,22 @@ async def get_portal_data(token: str, db: AsyncSession = Depends(get_db)):
     # Traemos el catálogo de este aliado
     res_cat = await db.execute(select(CatalogoItem).where(CatalogoItem.aliado_id == aliado.id))
     catalogo = res_cat.scalars().all()
+
+    # 1. Buscamos el nombre de la categoría en la BD
+    cat = await db.get(CategoriaServicio, aliado.categoria_id)
+    categoria_nombre = cat.nombre if cat else "General"
+
+    # 2. Traemos el catálogo
+    res_cat = await db.execute(select(CatalogoItem).where(CatalogoItem.aliado_id == aliado.id))
+    catalogo = res_cat.scalars().all()
     
     return {
         "aliado": {
             "id": aliado.id,
             "nombre": aliado.nombre,
             "estado_operativo": aliado.estado_operativo,
-            "logo_url": aliado.logo_url
+            "logo_url": aliado.logo_url,
+            "categoria": categoria_nombre # <-- NUEVO: Le enviamos esto a Angular
         },
         "catalogo": catalogo
     }
