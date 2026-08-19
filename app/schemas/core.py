@@ -23,7 +23,7 @@ class CategoriaUpdate(BaseModel):
 class CategoriaResponse(CategoriaBase):
     id: int
     class Config: from_attributes = True
-    
+
 # ==========================================
 # ZONAS (Edificios/Nodos)
 # ==========================================
@@ -107,14 +107,31 @@ class AliadoBase(BaseModel):
     categoria_id: int
     zona_id: int
     estado_operativo: str = "Abierto"
+    correo_contacto: Optional[str] = None
+    nombre_contacto: Optional[str] = None # <-- AÑADIR ESTA LÍNEA
+    telefono_contacto: Optional[str] = None
+    logo_url: Optional[str] = None
+    direccion: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
 
 class AliadoCreate(AliadoBase): pass
 
 class AliadoUpdate(BaseModel):
     nombre: Optional[str] = None
+    categoria_id: Optional[int] = None
+    zona_id: Optional[int] = None
     estado_operativo: Optional[str] = None
+    correo_contacto: Optional[str] = None
+    nombre_contacto: Optional[str] = None # <-- AÑADIR ESTA LÍNEA
+    telefono_contacto: Optional[str] = None
+    logo_url: Optional[str] = None
+    direccion: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
 
 class AliadoResponse(AliadoBase):
     id: int
-    class Config: from_attributes = True
+    qr_access_token: Optional[str] = None
     
+    class Config: from_attributes = True

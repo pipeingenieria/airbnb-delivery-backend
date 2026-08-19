@@ -217,7 +217,10 @@ async def create_aliado(aliado: AliadoCreate, db: AsyncSession = Depends(get_db)
     if not zona or not categoria:
         raise HTTPException(status_code=400, detail="La zona o la categoría no son válidas.")
         
-    nuevo = AliadoComercial(**aliado.model_dump())
+    nuevo = AliadoComercial(
+        **aliado.model_dump(),
+        qr_access_token=str(uuid.uuid4()) # <-- Generación del token para el portal
+    )
     db.add(nuevo)
     await db.commit()
     await db.refresh(nuevo)
@@ -323,3 +326,32 @@ async def delete_imagen(request: ImagenDeleteRequest):
         return {"message": "Imagen eliminada con éxito de Cloudinary"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+## ==========================================
+# IMPORTAMOS LA FUNCIÓN DEL CORREO
+# ==========================================
+from notificar_airbnb import enviar_correo_acceso_aliado 
+
+@router.post("/aliados/{aliado_id}/notificar")
+async def notificar_aliado_endpoint(
+    aliado_id: int, 
+    background_tasks: BackgroundTasks, 
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(AliadoComercial).where(AliadoComercial.id == aliado_id))
+    aliado = result.scalar_one_or_none()
+    
+    if not aliado or not aliado.correo_contacto:
+        raise HTTPException(status_code=404, detail="Aliado no encontrado o sin correo configurado")
+    
+    # ¡AQUÍ ESTÁ LA MAGIA! Disparamos el correo sin congelar la interfaz
+    background_tasks.add_task(
+        enviar_correo_acceso_aliado,
+        destinatario=aliado.correo_contacto,
+        nombre_comercio=aliado.nombre,
+        nombre_contacto=aliado.nombre_contacto or "Administrador",
+        qr_token=aliado.qr_access_token
+    )
+    
+    return {"message": "Notificación de portal encolada para envío."}

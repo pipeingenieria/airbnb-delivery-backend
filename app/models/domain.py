@@ -47,6 +47,16 @@ class AliadoComercial(Base):
     zona_id = Column(Integer, ForeignKey("zonas_geograficas.id"))
     estado_operativo = Column(String, default="Abierto")
 
+    # --- NUEVOS CAMPOS PARA EL PORTAL DEL ALIADO ---
+    qr_access_token = Column(String, unique=True, index=True)
+    correo_contacto = Column(String, nullable=True)
+    nombre_contacto = Column(String, nullable=True) # <-- AÑADIR ESTA LÍNEA
+    telefono_contacto = Column(String, nullable=True)
+    logo_url = Column(String, nullable=True)
+    direccion = Column(String, nullable=True)
+    latitud = Column(Float, nullable=True)
+    longitud = Column(Float, nullable=True)
+
     categoria = relationship("CategoriaServicio", back_populates="aliados")
     zona = relationship("ZonaGeografica", back_populates="aliados")
     catalogo = relationship("CatalogoItem", back_populates="aliado")
