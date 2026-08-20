@@ -23,31 +23,34 @@ async def get_guest_view_data(qr_token: str, db: AsyncSession = Depends(get_db))
     if not lat_prop or not lng_prop:
         raise HTTPException(status_code=404, detail="Propiedad sin coordenadas válidas.")
 
-    # =================================================================================
-    # 2. LA MAGIA ESPACIAL (Fórmula de Haversine en Raw SQL para máxima velocidad)
-    # =================================================================================
+    # 2. LA MAGIA ESPACIAL (Agregando cálculo de distancia exacta al Aliado)
     query_magica = text("""
         WITH ZonasValidas AS (
-            -- Paso A: Encontrar todas las zonas activas que logran cubrir la propiedad
-            SELECT id, nombre, latitud, longitud, radio
+            SELECT id, latitud, longitud, radio
             FROM zonas_geograficas
             WHERE activo = true 
-              AND (6371000 * acos(
+              AND (6371000 * acos(least(1.0, 
                     cos(radians(latitud)) * cos(radians(:lat_prop)) * 
                     cos(radians(:lng_prop) - radians(longitud)) + 
                     sin(radians(latitud)) * sin(radians(:lat_prop))
-                  )) <= radio
+                  ))) <= radio
         )
-        -- Paso B: Encontrar los aliados activos que estén dentro de esas zonas válidas
-        SELECT DISTINCT a.id, a.nombre, a.logo_url, c.id as cat_id, c.nombre as cat_nombre, c.icono as cat_icono
+        SELECT DISTINCT a.id, a.nombre, a.logo_url, c.id as cat_id, c.nombre as cat_nombre, c.icono as cat_icono,
+               COALESCE(
+                   6371000 * acos(least(1.0, 
+                       cos(radians(a.latitud)) * cos(radians(:lat_prop)) * 
+                       cos(radians(:lng_prop) - radians(a.longitud)) + 
+                       sin(radians(a.latitud)) * sin(radians(:lat_prop))
+                   )), 0
+               ) as distancia_metros
         FROM aliados_comerciales a
         JOIN categorias_servicio c ON a.categoria_id = c.id
         JOIN ZonasValidas zv ON (
-            6371000 * acos(
+            6371000 * acos(least(1.0, 
                 cos(radians(zv.latitud)) * cos(radians(a.latitud)) * 
                 cos(radians(a.longitud) - radians(zv.longitud)) + 
                 sin(radians(zv.latitud)) * sin(radians(a.latitud))
-            )
+            ))
         ) <= zv.radio
         WHERE a.estado_operativo = 'Abierto';
     """)
@@ -69,12 +72,26 @@ async def get_guest_view_data(qr_token: str, db: AsyncSession = Depends(get_db))
                 "icono": aliado.cat_icono
             }
             
+        # =========================================================
+        # CÁLCULO DE TIEMPO DINÁMICO
+        # =========================================================
+        distancia = float(aliado.distancia_metros)
+        # Una moto en ciudad viaja aprox 250 metros por minuto
+        tiempo_viaje = int(distancia / 250) 
+        tiempo_prep = 15 # 15 minutos base asumiendo cocción/empaque
+        
+        tiempo_minimo = tiempo_prep + tiempo_viaje
+        tiempo_maximo = tiempo_minimo + 10 # Margen de tráfico/logística
+        
+        tiempo_calculado = f"{tiempo_minimo}-{tiempo_maximo} min"
+        # =========================================================
+
         aliados_list.append({
             "id": aliado.id,
             "name": aliado.nombre,
             "category_id": aliado.cat_id,
             "rating": 4.8,
-            "time": "30-45 min",
+            "time": tiempo_calculado, # <-- EL TIEMPO AHORA ES REAL
             "priceLevel": "$$",
             "tags": aliado.cat_nombre,
             "imageUrl": aliado.logo_url or "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80"
