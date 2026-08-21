@@ -257,7 +257,7 @@ async def delete_aliado(aliado_id: int, db: AsyncSession = Depends(get_db)):
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from notificar_airbnb import enviar_correo_acceso_airbnb 
+from app.notificar_airbnb import enviar_correo_acceso_airbnb 
 
 @router.post("/propiedades/{propiedad_id}/notificar-airbnb")
 async def notificar_airbnb_endpoint(
@@ -331,7 +331,7 @@ async def delete_imagen(request: ImagenDeleteRequest):
 ## ==========================================
 # IMPORTAMOS LA FUNCIÓN DEL CORREO
 # ==========================================
-from notificar_airbnb import enviar_correo_acceso_aliado 
+from app.notificar_airbnb import enviar_correo_acceso_aliado 
 
 @router.post("/aliados/{aliado_id}/notificar")
 async def notificar_aliado_endpoint(
