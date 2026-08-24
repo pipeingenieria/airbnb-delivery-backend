@@ -99,10 +99,10 @@ async def get_guest_view_data(qr_token: str, db: AsyncSession = Depends(get_db))
         
     return {
         "propiedad": {
+            "id": propiedad.id, # <--- ¡ESTA ES LA LÍNEA MÁGICA QUE FALTA!
             "nombre": propiedad.nombre,
             "anfitrion": propiedad.airbnb_nombre
         },
-        "categorias": list(categorias_dict.values()),
         "aliados": aliados_list
     }
 

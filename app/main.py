@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importamos los routers (AÑADIMOS 'guest' AL FINAL DE ESTA LÍNEA)
-from app.routers import core, catalogo, partner, guest
+from app.routers import core, catalogo, partner, guest, checkout
 
 app = FastAPI(
     title="Airbnb Delivery API",
@@ -23,6 +23,7 @@ app.include_router(core.router)
 app.include_router(catalogo.router)
 app.include_router(partner.router)
 app.include_router(guest.router) # <-- LA LÍNEA MÁGICA QUE FALTABA
+app.include_router(checkout.router, prefix="/api/v1")
 
 @app.get("/health", tags=["Health"])
 async def health_check():
