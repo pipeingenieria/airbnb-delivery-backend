@@ -191,3 +191,18 @@ async def mp_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 # Aquí podrías llamar a una función para notificar al Restaurante y al Huésped
                 
     return {"ok": True}
+
+
+# --- 3. VERIFICADOR DE ESTADO (Equivalente al de BotCompany) ---
+@router.get("/status/{pedido_id}")
+async def check_payment_status(pedido_id: int, db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(PedidoTransaccion).where(PedidoTransaccion.id == pedido_id))
+    pedido = res.scalar_one_or_none()
+    
+    if not pedido:
+        return {"ok": False, "error": "Pedido no encontrado"}
+        
+    return {
+        "ok": True,
+        "estado": pedido.estado_operativo # Retornará "Pendiente Pago", "Aprobado - Por Preparar" o "Rechazado"
+    }
