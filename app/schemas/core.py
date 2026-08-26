@@ -136,6 +136,9 @@ class AliadoResponse(AliadoBase):
     
     class Config: from_attributes = True
 
+class AliadoResponseConPedidos(AliadoResponse):
+    pedidos_activos: int = 0
+
 
 # ==========================================
 # CATÁLOGO DE PRODUCTOS (Aliados)

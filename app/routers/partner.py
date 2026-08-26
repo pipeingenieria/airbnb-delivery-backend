@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import List
 
 from app.database import get_db
-from app.models.domain import AliadoComercial, CatalogoItem, CategoriaServicio
+from app.models.domain import AliadoComercial, CatalogoItem, CategoriaServicio, PedidoTransaccion, DetallePedido, PropiedadAirbnb
 from app.schemas.core import CatalogoItemCreate, CatalogoItemUpdate, CatalogoItemResponse
 
 router = APIRouter(prefix="/api/v1/core/partner", tags=["Portal Aliados"])
@@ -76,3 +77,35 @@ async def delete_item(token: str, item_id: int, db: AsyncSession = Depends(get_d
     await db.delete(db_item)
     await db.commit()
     return {"message": "Eliminado"}
+
+
+@router.get("/live-orders/{token}")
+async def get_live_orders(token: str, db: AsyncSession = Depends(get_db)):
+    # 1. Validar al aliado usando su token de acceso
+    res_aliado = await db.execute(select(AliadoComercial).where(AliadoComercial.qr_access_token == token)) # O el campo de token que uses
+    aliado = res_aliado.scalar_one_or_none()
+    
+    if not aliado:
+        raise HTTPException(status_code=404, detail="Acceso denegado")
+        
+    # 2. Buscar pedidos pagados e incluir Propiedad y Productos anidados
+    query = (
+        select(PedidoTransaccion)
+        .options(
+            # Trae la info del Airbnb (dirección, nombre)
+            selectinload(PedidoTransaccion.propiedad), 
+            
+            # Trae los items, y de cada 'DetallePedido', trae la info del 'CatalogoItem'[cite: 16]
+            selectinload(PedidoTransaccion.detalles).selectinload(DetallePedido.item) 
+        )
+        .where(
+            PedidoTransaccion.aliado_id == aliado.id,
+            PedidoTransaccion.estado_operativo.in_(["Aprobado - Por Preparar", "En Camino"])
+        )
+        .order_by(PedidoTransaccion.creado_en.asc())
+    )
+    
+    res_pedidos = await db.execute(query)
+    pedidos = res_pedidos.scalars().all()
+    
+    return {"ok": True, "pedidos": pedidos}

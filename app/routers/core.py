@@ -226,10 +226,38 @@ async def create_aliado(aliado: AliadoCreate, db: AsyncSession = Depends(get_db)
     await db.refresh(nuevo)
     return nuevo
 
-@router.get("/aliados", response_model=List[AliadoResponse])
+from sqlalchemy import select, func
+# Asegúrate de importar PedidoTransaccion en la línea 8
+from app.models.domain import AliadoComercial, PedidoTransaccion
+
+@router.get("/aliados") # O usa response_model=List[AliadoResponseConPedidos] si creaste el esquema
 async def get_aliados(db: AsyncSession = Depends(get_db)):
-    res = await db.execute(select(AliadoComercial))
-    return res.scalars().all()
+    # Hacemos el JOIN y contamos
+    query = (
+        select(
+            AliadoComercial,
+            func.count(PedidoTransaccion.id).label("pedidos_activos")
+        )
+        .outerjoin(
+            PedidoTransaccion,
+            (PedidoTransaccion.aliado_id == AliadoComercial.id) &
+            (PedidoTransaccion.estado_operativo.in_(["Aprobado - Por Preparar", "En Camino"]))
+        )
+        .group_by(AliadoComercial.id)
+    )
+    
+    res = await db.execute(query)
+    resultados = res.all()
+    
+    # Serializamos los resultados
+    aliados_list = []
+    for aliado, conteo in resultados:
+        # Convertimos el modelo SQLAlchemy a diccionario para poder inyectar el nuevo campo
+        aliado_dict = {c.name: getattr(aliado, c.name) for c in aliado.__table__.columns}
+        aliado_dict["pedidos_activos"] = conteo
+        aliados_list.append(aliado_dict)
+        
+    return aliados_list
 
 @router.put("/aliados/{aliado_id}", response_model=AliadoResponse)
 async def update_aliado(aliado_id: int, aliado_actualizado: AliadoUpdate, db: AsyncSession = Depends(get_db)):
