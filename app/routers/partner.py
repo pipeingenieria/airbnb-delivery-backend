@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import List
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.domain import AliadoComercial, CatalogoItem, CategoriaServicio, PedidoTransaccion, DetallePedido, PropiedadAirbnb
@@ -109,3 +110,49 @@ async def get_live_orders(token: str, db: AsyncSession = Depends(get_db)):
     pedidos = res_pedidos.scalars().all()
     
     return {"ok": True, "pedidos": pedidos}
+
+from app.models.domain import LiquidacionPago # Asegúrate de importarlo arriba
+
+@router.get("/history-orders/{token}")
+async def get_history_orders(token: str, db: AsyncSession = Depends(get_db)):
+    aliado = await get_aliado_by_token(token, db)
+    
+    # Consulta robusta con todas las relaciones cargadas
+    query = (
+        select(PedidoTransaccion)
+        .options(
+            selectinload(PedidoTransaccion.propiedad),
+            selectinload(PedidoTransaccion.detalles).selectinload(DetallePedido.item),
+            selectinload(PedidoTransaccion.liquidacion) # Trae el gateway_tx_id de MercadoPago
+        )
+        .where(PedidoTransaccion.aliado_id == aliado.id)
+        .order_by(PedidoTransaccion.creado_en.desc())
+    )
+    
+    res_pedidos = await db.execute(query)
+    pedidos = res_pedidos.scalars().all()
+    
+    return {"ok": True, "pedidos": pedidos}
+
+
+# Esquema para recibir el nuevo estado
+class UpdateOrderStatus(BaseModel):
+    estado: str
+
+# El endpoint que te faltaba
+@router.patch("/order/{pedido_id}/status")
+async def update_order_status(pedido_id: int, payload: UpdateOrderStatus, db: AsyncSession = Depends(get_db)):
+    # Buscamos el pedido en la base de datos
+    res = await db.execute(select(PedidoTransaccion).where(PedidoTransaccion.id == pedido_id))
+    pedido = res.scalar_one_or_none()
+    
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+        
+    # Actualizamos el estado operativo (ej. "En Camino" o "Entregado")
+    pedido.estado_operativo = payload.estado
+    
+    # Guardamos los cambios
+    await db.commit()
+    
+    return {"ok": True, "mensaje": f"Pedido {pedido_id} actualizado a {payload.estado}"}

@@ -141,11 +141,18 @@ async def crear_preferencia(req: CheckoutRequest, request: Request, db: AsyncSes
         
         response_data = pref.get("response", {})
         init_point = response_data.get("init_point")
+
+        preference_id = response_data.get("id")
         
         if not init_point:
             error_msg = str(pref.get("response", "Sin respuesta de MP"))
             print("❌ ERROR DE MERCADOPAGO:", error_msg)
             raise HTTPException(status_code=500, detail=f"Error MP: {error_msg}")
+            
+        # --- NUEVO: ACTUALIZAMOS LA LIQUIDACIÓN Y GUARDAMOS ---
+        if preference_id:
+            liquidacion.gateway_tx_id = f"PREF-{preference_id}"
+            await db.commit()
             
         return {"ok": True, "init_point": init_point, "pedido_id": nuevo_pedido.id}
         
